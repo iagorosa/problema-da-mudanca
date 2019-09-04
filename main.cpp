@@ -2,6 +2,7 @@
 #include <cmath>
 #include <algorithm>
 #include <limits>
+#include <fstream>
 
 using namespace std;
 
@@ -44,8 +45,8 @@ double calcCustoMin(int i, int y, int T_max, int *d, double *P, double **C){
     int j = i-1;
     int d_plano = d[j] + y;
     int a;
-    if (y == 0)
-        cout << "P[" << j-1 <<"]: " << P[j-1] << endl;
+//    if (y == 0)
+//        cout << "P[" << j-1 <<"]: " << P[j-1] << endl;
     for (int x = 0; x < T_max+1; x++) {
 
         if (d_plano < x || d_plano > T_max)
@@ -63,36 +64,113 @@ double calcCustoMin(int i, int y, int T_max, int *d, double *P, double **C){
     return minimo(possiveisCustos, T_max);
 }
 
+/*
+void leitura(int *D, int *qtd_posto, int **d, double **P, const string arq_name){
+    ifstream entrada;
+    entrada.open(arq_name, ios::in);
+
+    if(!entrada) cout << "Nao abriu" << endl;
+
+    entrada >> *D;
+    entrada >> *qtd_posto;
+
+    cout << *D << "\t" << *qtd_posto << endl << endl;
+
+//    *P = new double[*qtd_posto+1];
+//    *d = new int[*qtd_posto+1];
+    *P = new double[8];
+    *d = new int[8];
+
+    double preco;
+    int dist;
+    entrada >> dist >> preco;
+    *d[0] = dist;
+    *P[0] = preco;
+    cout << *d[0] << "\t" << *P[0] << endl;
+
+    entrada >> dist >> preco;
+    *d[1] = dist;
+    *P[1] = preco;
+    cout << *d[1] << "\t" << *P[1] << endl;
+
+    for (int i = 1; i < *qtd_posto; i++) {
+        entrada >> dist >> preco;
+        cout << i << "\t" << dist << "\t" << preco << endl;
+        *d[i] = dist - *d[i - 1];
+        *P[i] = preco;
+
+        cout << *d[i] << "\t" << *P[i] << endl;
+    }
+}
+*/
+
+
+void leitura(int *D, int *qtd_posto, int *&d, double *&P, const string arq_name){
+    ifstream entrada;
+    entrada.open(arq_name, ios::in);
+
+    if(!entrada) cout << "Nao abriu" << endl;
+
+    entrada >> *D;
+    entrada >> *qtd_posto;
+
+//    cout << *D << "\t" << *qtd_posto << endl << endl;
+
+    P = new double[*qtd_posto];
+    d = new int[*qtd_posto];
+
+    double preco;
+    int dist;
+    int dist_acum=0;
+
+//    entrada >> dist >> preco;
+//    d[0] = dist;
+//    P[0] = preco;
+//    dist_total+= dist;
+
+//    cout << d[0] << "\t" << P[0] << endl;
+//
+//    entrada >> dist >> preco;
+//    d[1] = dist;
+//    P[1] = preco;
+//    cout << d[1] << "\t" << P[1] << endl;
+
+    for (int i = 0; i < *qtd_posto; i++) {
+        entrada >> dist >> preco;
+//        cout << i << "\t" << dist << "\t" << preco << endl;
+//        cout << dist << "\t" << d[i-1] << endl;
+        d[i] = dist - dist_acum;
+        P[i] = preco;
+        dist_acum += d[i];
+
+//        cout << d[i] << "\t" << P[i] << endl;
+    }
+}
+
+
+
 int main() {
 
-/////////////// EXEMPLO MEDINA ////////////////////
-//    const int D = 280;
-//    const int qtd_posto = 5;
-//    int d[qtd_posto+1]    = {10,   60,   100,  30,    50,    100};
-//    double P[qtd_posto+1] = {10.0, 50.0, 10.0, 50.0, 100.0, inf};
-//////////////////////////////////////////////////
+    int D, qtd_posto;
+    int *d;
+    double *P;
+    string arq = "./../exemplo_medina01.txt";
 
-/////////////// EXEMPLO LOBOSCO /////////////////
-//    const int D = 500;
-//    const int qtd_posto = 7;
-//    int d[qtd_posto+1] =    {100,    50,    50,   100,   100,    50,     50,  100};
-//    double P[qtd_posto+1] = {3.99, 3.888, 3.777, 3.999, 4.199, 4.119, 4.1399, inf};
-////////////////////////////////////////////////
+    leitura(&D, &qtd_posto, d, P, arq);
 
-/////////////// EXEMPLO LOBOSCO 2 /////////////////
-    const int D = 500;
-    const int qtd_posto = 7;
-    int d[qtd_posto+1] =    {  100,    50,    50,   100,   100,    50,     50,  100};
-    double P[qtd_posto+1] = {0.999, 0.888, 0.777, 0.999, 1.009, 1.019,  1.399, inf};
-//////////////////////////////////////////////////
+//    cout << D << "\t" << qtd_posto << endl << endl;
+
+//    for (int i = 0; i < qtd_posto; i++)
+//        cout << d[i] << "\t" << P[i] << endl;
 
     int T_max = 200;
     int T_init = 100;
+    int T_final = 100;
 
 //    double C[D][qtd_posto + 2];
     double **C = new double*[T_max+1];
     for (int i = 0; i < T_max+1; ++i) {
-        C[i] = new double[qtd_posto+2];
+        C[i] = new double[qtd_posto+1];
     }
 
     for(int i = 0; i < 2; i++){
@@ -101,7 +179,7 @@ int main() {
         }
     }
 
-    for(int i = 2; i < qtd_posto + 2; i++){
+    for(int i = 2; i < qtd_posto + 1; i++){
         for(int j = 0; j < T_max+1; j++){
             C[j][i] = calcCustoMin(i, j, T_max, d, P, C);
         }
@@ -109,15 +187,16 @@ int main() {
 
     for (int j = 0; j < T_max; j++){
         printf("%3d: ", j);
-        for(int i = 0; i < qtd_posto+2; i++){
+        for(int i = 0; i < qtd_posto+1; i++){
 //            printf("%10.5lf \t", C[j][i]);
             printf("%.3f \t", C[j][i]);
-        }    float* x = new float[5];
-    float* x_next = new float[5];
+        }
         cout << endl;
     }
 
+    cout << endl << endl;
 
+    cout << "Resposta: " << C[T_final][qtd_posto] << endl;
 
     return 0;
 }
