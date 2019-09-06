@@ -40,37 +40,31 @@ float inicializacao(int i, int j, int T_init, int d_init){
 }
 
 
+double calcCustoMin(int i, int y, int T_lim, int *d, double *P, double **C){
 
-
-double calcCustoMin(int i, int y, int T_max, int *d, double *P, double **C){
-
-    double *possiveisCustos = new double[T_max+1];
+    double *possiveisCustos = new double[T_lim];
     int j = i-1;
     int d_plano = d[j] + y;
     int a, x;
-    for (x=0; x < T_max+1; x++) {
+    for (x=0; x < T_lim; x++) {
 
-        if (d_plano > T_max ) {
+        if (d_plano < x)
             possiveisCustos[x] = inf;
-        }
         else {
-            if (d_plano < x)
-                possiveisCustos[x] = inf;
+            if (d_plano == x)
+                possiveisCustos[x] = C[j][x];
             else {
-                if (d_plano == x)
-                    possiveisCustos[x] = C[x][j];
-                else {
-                    a = d_plano - x;
-                    possiveisCustos[x] = C[x][j] + a * P[j - 1]; //Ficar atento parametro P
-                }
+                a = d_plano - x;
+                possiveisCustos[x] = C[j][x] + a * P[j - 1]; 
             }
         }
     }
 
 
-    return minimo(possiveisCustos, x-1);
+    double min = minimo(possiveisCustos, T_lim);
+    delete[] possiveisCustos;
+    return min;
 }
-
 
 
 void leitura(int *D, int *qtd_posto, int *(&d), double *(&P), const string arq_name){
@@ -104,7 +98,7 @@ int main() {
     int D, qtd_posto;
     int *d;
     double *P;
-    string arq = "./instancias/exemplo_medina01.txt";
+    string arq = "./instancias/exemplo_lobosco02.txt";
 
     leitura(&D, &qtd_posto, d, P, arq);
 
@@ -112,38 +106,48 @@ int main() {
     int T_init = 100;
     int T_final = 100;
 
-    double **C = new double*[T_max+1];
-    for (int i = 0; i < T_max+1; ++i) {
-        C[i] = new double[qtd_posto+1];
-    }
+    double **C = new double*[qtd_posto+1];
+    int *tams = new int[qtd_posto+1];
 
+    tams[0] = T_init + 1;
+    tams[1] = T_init - d[0] + 1;
     for(int i = 0; i < 2; i++){
-        for (int j = 0; j < T_max+1; j++) {
-            C[j][i] = inicializacao(i, j, T_init, d[0]);
+        C[i] = new double[T_max+1];
+        for (int j = 0; j < tams[i]; j++) {
+            C[i][j] = inicializacao(i, j, T_init, d[0]);
         }
     }
 
-    bool pause;
     int k = 0;
     for(int i = 2; i < qtd_posto + 1; i++){
-        pause = false;
 
-        for(int j = 0; j < T_max+1; j++){
-            C[j][i] = calcCustoMin(i, j, T_max, d, P, C);
+        tams[i] = T_max - d[i-1] + 1;
+        C[i] = new double[tams[i]];
+
+        for(int j = 0; j < tams[i]; j++){
+            C[i][j] = calcCustoMin(i, j, tams[i-1], d, P, C);
         }
     }
 
+    bool error = false;
     for (int j = 0; j < T_max; j++){
         printf("%3d: ", j);
-        for(int i = 0; i < qtd_posto+1; i++){
-            printf("%.3f \t", C[j][i]);
-        }
+        for(int i = 0; i < qtd_posto+1; i++)
+
+            if (j <= tams[i]){
+                printf("%.3f \t", C[i][j]);
+            } else cout << "\t\t";
+
         cout << endl;
     }
 
-    cout << endl << endl;
+    cout << endl << endl << endl;
 
-    cout << "Resposta: " << C[T_final][qtd_posto] << endl;
+    cout << "Resposta: " << C[qtd_posto][T_final] << endl;
+    
+    delete[] tams;
+    for (int i = 0; i < qtd_posto+1; i++) delete[] C[i];
+    delete[] C;
 
     return 0;
 }
