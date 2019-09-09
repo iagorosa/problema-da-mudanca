@@ -67,8 +67,9 @@ double calcCustoMin(int i, int y, int T_max, int *d, double *P, double **C){
         }
     }
 
-
-    return minimo(possiveisCustos, x-1);
+    double min = minimo(possiveisCustos, x-1);
+    delete[] possiveisCustos;
+    return min;
 }
 
 
@@ -144,6 +145,9 @@ int main() {
     cout << endl << endl;
 
     cout << "Resposta: " << C[T_final][qtd_posto] << endl;
+    
+    for (int i = 0; i < T_max+1; i++) delete[] C[i];
+    delete[] C;    
 
     return 0;
 }
